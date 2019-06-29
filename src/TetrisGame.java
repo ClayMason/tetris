@@ -15,12 +15,20 @@ public class TetrisGame extends JPanel {
     Random rand_;
     ArrayList<int[][]> shapes;
 
+    int x_, y_;
+
+    int active_block_index;
+    int[][] shape;
+
     public TetrisGame () {
 
+        x_ = 0;
+        y_ = 0;
         rand_ = new Random ();
 
         this.setup ();
         System.out.print (background.getWidth(null) + ", " + background.getHeight(null));
+
     }
 
     private void setup () {
@@ -86,7 +94,7 @@ public class TetrisGame extends JPanel {
         shapes.add(shape_2);
         shapes.add(shape_3);
         shapes.add(shape_4);
-        
+
         // set frame
         frame = new JFrame("Tetris Game");
         frame.add(this);
@@ -94,6 +102,7 @@ public class TetrisGame extends JPanel {
         // frame.setVisible(true);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setResizable(false);
+
     }
 
     public void start (){// throws java.io.IOException {
@@ -113,6 +122,8 @@ public class TetrisGame extends JPanel {
             catch (java.lang.InterruptedException e) {
                 System.out.print ("interrupted.\n");
             }
+
+            // this.update ();
         }
 
     }
@@ -142,4 +153,51 @@ public class TetrisGame extends JPanel {
         }
     }
 
+    private void update () {
+
+        // case 1: no blocks chosen yet
+        if (active_block_index == -1) {
+            // choose a block.
+        }
+        else {
+            // case 2: there's an active block but it's grounded
+            // if ( grounded() )
+            // case 3: there's an active block but it's not grounded
+
+        }
+
+    }
+
+    int[][] rotate (int[][] shape) {
+
+        int[][] rotated_shape = new int[shape[0].length][shape.length];
+
+        for ( int i = 0; i < rotated_shape.length; ++i ) {
+            for ( int j = 0; j < rotated_shape[0].length; ++j ) {
+
+
+                rotated_shape[i][j] = shape[j][ shape[0].length-1-i ];
+
+            }
+        }
+
+        return rotated_shape;
+    }
+
+    boolean grounded () {
+        // given the block index ( and class variables x_, y_, and grid ), determine if the
+        // shape is grounded
+        return false;
+    }
+
+    void console_shape (int[][] shape) {
+
+        for ( int i = 0; i < shape.length; ++i ) {
+            for ( int j = 0; j < shape[0].length; ++j ) {
+                System.out.print( (shape[i][j] == 1 ? "X " : "  ") );
+            }
+            System.out.print("\n");
+        }
+
+    }
 }

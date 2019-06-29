@@ -1,12 +1,14 @@
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.awt.geom.Ellipse2D;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Random;
+import java.awt.event.KeyListener;
 
-public class TetrisGame extends JPanel {
+public class TetrisGame extends JPanel implements KeyListener {
 
     Image background;
     Image[] blocks;
@@ -53,15 +55,6 @@ public class TetrisGame extends JPanel {
 
         // set the grid
         grid = new int[16][10];
-        // set random values for grid
-        Random rand = new Random();
-        for ( int i = 0; i < grid.length; ++i ) {
-            for ( int j = 0; j < grid[0].length; ++j ) {
-                grid[i][j] = rand.nextInt(6);
-                grid[i][j] += 1;
-                // grid values b/w [1-6] ( 0 is reserved for empty block )
-            }
-        }
 
         /* setup the shapes
         *
@@ -102,7 +95,14 @@ public class TetrisGame extends JPanel {
         // frame.setVisible(true);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setResizable(false);
+        frame.addKeyListener(this);
 
+        // testing code ...
+        Random rand = new Random();
+        shape = shapes.get( rand.nextInt( shapes.size() ) );
+        x_ = 3;
+        y_ = 3;
+        place_shape(shape, x_, y_, 2);
     }
 
     public void start (){// throws java.io.IOException {
@@ -144,10 +144,10 @@ public class TetrisGame extends JPanel {
                 int x_pos = 100 + (j * 25);
                 int y_pos = 150 + (i * 25);
 
-                Image block = blocks[grid[i][j] - 1];
-                g2d.drawImage(block, x_pos, y_pos, 25, 25, null);
-
-                grid[i][j] = rand_.nextInt(6)+1;
+                if ( grid[i][j] - 1 >= 0 ) {
+                    Image block = blocks[grid[i][j] - 1];
+                    g2d.drawImage(block, x_pos, y_pos, 25, 25, null);
+                }
 
             }
         }
@@ -212,6 +212,7 @@ public class TetrisGame extends JPanel {
     }
 
     void place_shape (int[][] shape, int x, int y, int block_index) {
+
         for ( int i = x; i < x + shape[0].length && i < grid[0].length; ++i ) {
             for ( int j = y; j < y + shape.length && j < grid.length; ++j ) {
                 if (shape[j-y][i-x] == 1) {
@@ -219,5 +220,48 @@ public class TetrisGame extends JPanel {
                 }
             }
         }
+    }
+
+    @Override
+    public void keyTyped(KeyEvent e) {
+
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+
+        switch (e.getKeyCode()) {
+            case KeyEvent.VK_SPACE:
+                System.out.println("Rotate");
+
+                clear_shape(shape, x_, y_);
+                shape = rotate(shape);
+                if ( x_ > grid[0].length - shape[0].length )
+                    x_ = grid[0].length - shape[0].length;
+
+                place_shape(shape, x_, y_, 2);
+                break;
+
+            case KeyEvent.VK_A:
+                System.out.println("Left");
+
+                clear_shape(shape, x_, y_);
+                x_ = x_ - 1 < 0 ? 0 : x_ - 1;
+                place_shape(shape,x_, y_, 2);
+                break;
+
+            case KeyEvent.VK_D:
+                System.out.println("Right");
+
+                clear_shape(shape, x_, y_);
+                x_ = x_ + 1 > grid[0].length - shape[0].length ? x_ : x_ + 1;
+                place_shape(shape,x_, y_, 2);
+                break;
+        }
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+
     }
 }

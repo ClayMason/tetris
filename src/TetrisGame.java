@@ -200,4 +200,24 @@ public class TetrisGame extends JPanel {
         }
 
     }
+
+    void clear_shape (int[][] shape, int x, int y) {
+        for ( int i = x; i < x + shape[0].length && i < grid[0].length; ++i ) {
+            for ( int j = y; j < y + shape.length && j < grid.length; ++j ) {
+                if (shape[j-y][i-x] == 1) {
+                    grid[j][i] = 0;
+                }
+            }
+        }
+    }
+
+    void place_shape (int[][] shape, int x, int y, int block_index) {
+        for ( int i = x; i < x + shape[0].length && i < grid[0].length; ++i ) {
+            for ( int j = y; j < y + shape.length && j < grid.length; ++j ) {
+                if (shape[j-y][i-x] == 1) {
+                    grid[j][i] = block_index;
+                }
+            }
+        }
+    }
 }

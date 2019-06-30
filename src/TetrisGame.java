@@ -17,7 +17,7 @@ public class TetrisGame extends JPanel implements KeyListener {
     Random rand_;
     ArrayList<int[][]> shapes;
 
-    final int MAX_ROLL = 10;
+    final int MAX_ROLL = 6;
     int roll = 0;
 
     int x_, y_;
@@ -175,10 +175,17 @@ public class TetrisGame extends JPanel implements KeyListener {
             System.out.println ("shape_index: " + shape_index + ", shapes size: " + shapes.size());
 
             shape = shapes.get( shape_index );
+
+            console_shape (shape);
+
             x_ = grid[0].length/2;
             y_ = 0;
             active_block_index = rand.nextInt(blocks.length);
+
+            System.out.println ("active block index: " + active_block_index);
+
             place_shape(shape, x_, y_, active_block_index);
+            draw_grid ();
         }
         else {
             // case 2: there's an active block but it's grounded
@@ -239,15 +246,23 @@ public class TetrisGame extends JPanel implements KeyListener {
         return false;
     }
 
-    void console_shape (int[][] shape) {
+    void console_shape (int[][] shape_) {
 
-        for ( int i = 0; i < shape.length; ++i ) {
-            for ( int j = 0; j < shape[0].length; ++j ) {
-                System.out.print( (shape[i][j] == 1 ? "X " : "  ") );
+        for ( int i = 0; i < shape_.length; ++i ) {
+            for ( int j = 0; j < shape_[0].length; ++j ) {
+                System.out.print( (shape_[i][j] == 1 ? "X " : "  ") );
             }
             System.out.print("\n");
         }
 
+    }
+    void draw_grid () {
+        for ( int i = 0; i < grid.length; ++i ) {
+            for ( int j = 0; j < grid[0].length; ++j ) {
+                System.out.print(grid[i][j] + " ");
+            }
+            System.out.print("\n");
+        }
     }
 
     void clear_shape (int[][] shape, int x, int y) {
@@ -260,12 +275,12 @@ public class TetrisGame extends JPanel implements KeyListener {
         }
     }
 
-    void place_shape (int[][] shape, int x, int y, int block_index) {
+    void place_shape (int[][] shape_, int x, int y, int block_index) {
 
-        for ( int i = x; i < x + shape[0].length && i < grid[0].length; ++i ) {
-            for ( int j = y; j < y + shape.length && j < grid.length; ++j ) {
-                if (shape[j-y][i-x] == 1) {
-                    grid[j][i] = block_index;
+        for ( int i = x; i < x + shape_[0].length && i < grid[0].length; ++i ) {
+            for ( int j = y; j < y + shape_.length && j < grid.length; ++j ) {
+                if (shape_[j-y][i-x] == 1) {
+                    grid[j][i] = block_index + 1;
                 }
             }
         }
@@ -404,12 +419,28 @@ public class TetrisGame extends JPanel implements KeyListener {
             if ( row_filled ) {
                 //System.out.println("Clearing row...");
                 // move down all the parts above
+                int row_iterations = 0;
                 for ( int a = i - 1; a >= 0; --a ) { // y
+
+                    boolean empty_row = true;
+
                     for ( int b = 0; b < grid[0].length; ++b ) { //x
+
+                        if (grid[a][b] != 0) empty_row = false;
+
                         grid[a+1][b] = grid[a][b];
                         grid[a][b] = 0;
                     }
+
+                    row_iterations += 1;
+
+                    // no static blocks can exist above an empty row, so when an empty row
+                    // is met while trying to clear the full rows, then stop since, there's
+                    // guaranteed to be no more blocks above to check for.
+                     if ( empty_row ) break;
                 }
+
+                System.out.println ("row iterations: " + row_iterations);
             }
             //else System.out.println("row isnt filled");
         }

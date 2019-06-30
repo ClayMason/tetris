@@ -17,13 +17,18 @@ public class TetrisGame extends JPanel implements KeyListener {
     Random rand_;
     ArrayList<int[][]> shapes;
 
+    final int MAX_ROLL = 10;
+    int roll = 0;
+
     int x_, y_;
 
     int active_block_index;
     int[][] shape;
+    Random rand;
 
     public TetrisGame () {
 
+        rand = new Random();
         x_ = 0;
         y_ = 0;
         rand_ = new Random ();
@@ -97,12 +102,7 @@ public class TetrisGame extends JPanel implements KeyListener {
         frame.setResizable(false);
         frame.addKeyListener(this);
 
-        // testing code ...
-        Random rand = new Random();
-        shape = shapes.get( rand.nextInt( shapes.size() ) );
-        x_ = 3;
-        y_ = 3;
-        place_shape(shape, x_, y_, 2);
+        active_block_index = -1;
     }
 
     public void start (){// throws java.io.IOException {
@@ -114,6 +114,9 @@ public class TetrisGame extends JPanel implements KeyListener {
         });
 
         while ( true ) {
+
+            // choose block
+
             repaint ();
             try {
 
@@ -123,7 +126,15 @@ public class TetrisGame extends JPanel implements KeyListener {
                 System.out.print ("interrupted.\n");
             }
 
-            // this.update ();
+            this.update ();
+
+            roll = ( roll + 1 ) % MAX_ROLL;
+//            System.out.print(roll + "\n");
+            if ( roll == 0 ) {
+
+                lower_shape ( shape );
+
+            }
         }
 
     }
@@ -157,11 +168,20 @@ public class TetrisGame extends JPanel implements KeyListener {
 
         // case 1: no blocks chosen yet
         if (active_block_index == -1) {
+            System.out.println ("Choosing new block.");
             // choose a block.
+            shape = shapes.get( rand.nextInt( shapes.size() ) );
+            x_ = grid[0].length/2;
+            y_ = 0;
+            active_block_index = rand.nextInt(blocks.length);
+            place_shape(shape, x_, y_, active_block_index);
         }
         else {
             // case 2: there's an active block but it's grounded
-            // if ( grounded() )
+            if ( y_ == grid.length - shape.length ) {
+                active_block_index = -1;
+                System.out.println ("Getting new block.");
+            }
             // case 3: there's an active block but it's not grounded
 
         }
@@ -185,8 +205,31 @@ public class TetrisGame extends JPanel implements KeyListener {
     }
 
     boolean grounded () {
-        // given the block index ( and class variables x_, y_, and grid ), determine if the
-        // shape is grounded
+
+        // if it's at the floor of the grid, then it is grounded
+        if ( y_+1 > grid.length - shape.length ) return true;
+
+        // otherwise, check if there is a block under any of the blocks of the shape
+        for ( int i = y_; i < y_ + shape.length; ++i ) {
+            for ( int j = x_; j < x_ + shape[0].length; ++j ) {
+
+                // if shape has block here and lower block in grid has a block, return true
+                boolean current_filled = shape[i-y_][j-x_] == 1;
+                boolean lower_empty = true;
+
+                if ( i-y_+1 < shape.length ) {
+                    if (shape[i-y_+1][j-x_] == 0 && i+1 < grid.length && grid[i+1][j] != 0 )
+                        lower_empty = false;
+                }
+                else if ( i+1 < grid.length && grid[i+1][j] != 0  ) {
+                    lower_empty = false;
+                }
+
+                if ( current_filled && !lower_empty ) return true;
+
+            }
+        }
+
         return false;
     }
 
@@ -222,6 +265,19 @@ public class TetrisGame extends JPanel implements KeyListener {
         }
     }
 
+    void lower_shape ( int[][] shape ) {
+
+        if ( grounded() ) {//y_+1 > grid.length - shape.length ) {
+            active_block_index = -1;
+            update ();
+        }
+        else {
+            clear_shape(shape, x_, y_);
+            y_ += 1;
+            place_shape(shape, x_, y_, active_block_index);
+        }
+    }
+
     @Override
     public void keyTyped(KeyEvent e) {
 
@@ -232,32 +288,66 @@ public class TetrisGame extends JPanel implements KeyListener {
 
         switch (e.getKeyCode()) {
             case KeyEvent.VK_SPACE:
-                System.out.println("Rotate");
 
                 clear_shape(shape, x_, y_);
                 shape = rotate(shape);
                 if ( x_ > grid[0].length - shape[0].length )
                     x_ = grid[0].length - shape[0].length;
 
-                place_shape(shape, x_, y_, 2);
+                place_shape(shape, x_, y_, active_block_index);
                 break;
 
             case KeyEvent.VK_A:
-                System.out.println("Left");
 
-                clear_shape(shape, x_, y_);
-                x_ = x_ - 1 < 0 ? 0 : x_ - 1;
-                place_shape(shape,x_, y_, 2);
+                if ( left_clear() ) {
+                    clear_shape(shape, x_, y_);
+                    x_ = x_ - 1 < 0 ? 0 : x_ - 1;
+                    place_shape(shape,x_, y_, active_block_index);
+                }
                 break;
 
             case KeyEvent.VK_D:
-                System.out.println("Right");
 
-                clear_shape(shape, x_, y_);
-                x_ = x_ + 1 > grid[0].length - shape[0].length ? x_ : x_ + 1;
-                place_shape(shape,x_, y_, 2);
+                if ( right_clear() ) {
+                    clear_shape(shape, x_, y_);
+                    x_ = x_ + 1 > grid[0].length - shape[0].length ? x_ : x_ + 1;
+                    place_shape(shape,x_, y_, active_block_index);
+                }
+                break;
+
+            case KeyEvent.VK_S:
+
+                lower_shape(shape);
                 break;
         }
+    }
+
+    boolean right_clear () {
+        for ( int i = y_; i < y_ + shape.length; ++i ) {
+            for ( int j = x_; j < x_ + shape[0].length; ++j ) {
+
+                // if shape has block here and lower block in grid has a block, return true
+                boolean current_filled = shape[i-y_][j-x_] == 1;
+                boolean right_empty = true;
+
+                if ( j-x_+1 < shape[0].length ) {
+                    if (shape[i-y_][j-x_+1] == 0 && j+1 < grid[0].length && grid[i][j+1] != 0 )
+                        right_empty = false;
+                }
+                else if ( j+1 < grid[0].length && grid[i][j+1] != 0  ) {
+                    right_empty = false;
+                }
+
+                if ( current_filled && !right_empty ) return false;
+
+            }
+        }
+
+        return true;
+    }
+
+    boolean left_clear () {
+        return true;
     }
 
     @Override

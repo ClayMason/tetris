@@ -23,12 +23,20 @@ public class TetrisGame extends JPanel implements KeyListener {
     int x_, y_;
 
     int active_block_index;
+    int next_block_index;
     int[][] shape;
+    int[][] next_shape;
     Random rand;
+
+    int score;
 
     public TetrisGame () {
 
+        shape = null;
+        next_shape = null;
+
         rand = new Random();
+        score = 0;
         x_ = 0;
         y_ = 0;
         rand_ = new Random ();
@@ -162,6 +170,24 @@ public class TetrisGame extends JPanel implements KeyListener {
 
             }
         }
+
+        // draw the "next shape" blocks
+        if ( next_shape != null ) {
+            for ( int i = 0; i < next_shape.length; ++i ) {
+                for ( int j = 0; j < next_shape[0].length; ++j ) {
+                    // draw block
+                    if (next_shape[i][j] == 1) {
+                        int y_pos = (25 * i) + 100;
+                        int x_pos = (25 * j) + 40;
+                        g2d.drawImage ( blocks[next_block_index], x_pos, y_pos, 25, 25, null);
+                    }
+                }
+            }
+        }
+
+        // draw score
+        g2d.setColor(Color.WHITE);
+        g2d.drawString ("Score: " + this.score, 250, 50);
     }
 
     private void update () {
@@ -174,13 +200,26 @@ public class TetrisGame extends JPanel implements KeyListener {
 
             System.out.println ("shape_index: " + shape_index + ", shapes size: " + shapes.size());
 
-            shape = shapes.get( shape_index );
+            // shape = shapes.get( shape_index );
+            if ( next_shape == null ) {
+                shape = shapes.get(shape_index);
+                next_shape = shapes.get( rand.nextInt (shapes.size()) );
+                next_block_index = rand.nextInt(blocks.length);
+                active_block_index = rand.nextInt(blocks.length);
+            }
+
+            else {
+                shape = next_shape;
+                next_shape = shapes.get(shape_index);
+
+                active_block_index = next_block_index;
+                next_block_index = rand.nextInt(blocks.length);
+            }
 
             console_shape (shape);
 
             x_ = grid[0].length/2;
             y_ = 0;
-            active_block_index = rand.nextInt(blocks.length);
 
             System.out.println ("active block index: " + active_block_index);
 
@@ -417,7 +456,7 @@ public class TetrisGame extends JPanel implements KeyListener {
             //System.out.println(row_);
 
             if ( row_filled ) {
-                //System.out.println("Clearing row...");
+
                 // move down all the parts above
                 int row_iterations = 0;
                 for ( int a = i - 1; a >= 0; --a ) { // y
@@ -440,7 +479,8 @@ public class TetrisGame extends JPanel implements KeyListener {
                      if ( empty_row ) break;
                 }
 
-                System.out.println ("row iterations: " + row_iterations);
+                // add score
+                this.score += 100;
             }
             //else System.out.println("row isnt filled");
         }

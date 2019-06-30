@@ -170,7 +170,11 @@ public class TetrisGame extends JPanel implements KeyListener {
         if (active_block_index == -1) {
             System.out.println ("Choosing new block.");
             // choose a block.
-            shape = shapes.get( rand.nextInt( shapes.size() ) );
+            int shape_index = rand.nextInt( shapes.size() );
+
+            System.out.println ("shape_index: " + shape_index + ", shapes size: " + shapes.size());
+
+            shape = shapes.get( shape_index );
             x_ = grid[0].length/2;
             y_ = 0;
             active_block_index = rand.nextInt(blocks.length);
@@ -179,7 +183,9 @@ public class TetrisGame extends JPanel implements KeyListener {
         else {
             // case 2: there's an active block but it's grounded
             if ( y_ == grid.length - shape.length ) {
-                active_block_index = -1;
+
+                lower_shape( shape );
+
                 System.out.println ("Getting new block.");
             }
             // case 3: there's an active block but it's not grounded
@@ -269,13 +275,18 @@ public class TetrisGame extends JPanel implements KeyListener {
 
         if ( grounded() ) {//y_+1 > grid.length - shape.length ) {
             active_block_index = -1;
-            update ();
+            System.out.println ("Done...");
+
+            // check if there are any filled rows
+            clear_rows ();
         }
         else {
             clear_shape(shape, x_, y_);
             y_ += 1;
             place_shape(shape, x_, y_, active_block_index);
         }
+
+        System.out.println("shape lowered... (" + x_ + " ," + y_ + ")");
     }
 
     @Override
@@ -347,7 +358,62 @@ public class TetrisGame extends JPanel implements KeyListener {
     }
 
     boolean left_clear () {
+        for ( int i = y_; i < y_ + shape.length; ++i ) {
+            for ( int j = x_; j < x_ + shape[0].length; ++j ) {
+
+                // if shape has block here and lower block in grid has a block, return true
+                boolean current_filled = shape[i-y_][j-x_] == 1;
+                boolean left_empty = true;
+
+                if ( j-x_-1 >= 0 ) {
+                    if (shape[i-y_][j-x_-1] == 0 && j-1 >= 0 && grid[i][j-1] != 0 )
+                        left_empty = false;
+                }
+                else if ( j-1 >= 0 && grid[i][j-1] != 0  ) {
+                    left_empty = false;
+                }
+
+                if ( current_filled && !left_empty ) return false;
+
+            }
+        }
+
         return true;
+    }
+
+    void clear_rows () {
+
+        System.out.println ("Clearing rows...");
+
+        for ( int i = 0; i < grid.length; ++i ) {
+            boolean row_filled = true;
+
+            //String row_ = "";
+
+            for ( int j = 0; j < grid[0].length; ++j ) {
+                if ( grid[i][j] == 0 ) {
+                    //row_ += " ";
+                    row_filled = false;
+                    break;
+                }
+
+                //row_ += "X";
+            }
+            //System.out.println(row_);
+
+            if ( row_filled ) {
+                //System.out.println("Clearing row...");
+                // move down all the parts above
+                for ( int a = i - 1; a >= 0; --a ) { // y
+                    for ( int b = 0; b < grid[0].length; ++b ) { //x
+                        grid[a+1][b] = grid[a][b];
+                        grid[a][b] = 0;
+                    }
+                }
+            }
+            //else System.out.println("row isnt filled");
+        }
+
     }
 
     @Override
